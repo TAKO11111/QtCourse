@@ -105,17 +105,7 @@ void Widget::on_btnClear_clicked()
 }
 
 // 双目运算符点击
-void Widget::binaryOperatorClicked()
-{
-    QString opcode = qobject_cast<QPushButton*>(sender())->text();
-    if (!operand.isEmpty()) {
-        operands.push_back(operand);
-        operand.clear();
-        opcodes.push_back(opcode);
-    }
-    QString result = calculation();
-    ui->display->setText(result);
-}
+
 
 // 单目运算符点击
 void Widget::btnUnaryOperatorClicked()
