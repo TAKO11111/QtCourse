@@ -1,82 +1,98 @@
-# This file is used to ignore files which are generated
-# ----------------------------------------------------------------------------
+# Qt 项目相关
+####################################
+# 编译输出目录
+build-*
+cmake-build-*
+out/
+bin/
+lib/
 
-*~
-*.autosave
-*.a
-*.core
+# Qt 生成文件
+*.pro.user
+*.pro.user.*
+*.qmake.stash
 *.moc
-*.o
-*.obj
-*.orig
-*.rej
-*.so
-*.so.*
-*_pch.h.cpp
-*_resource.rc
-*.qm
-.#*
-*.*#
-core
-!core/
-tags
-.DS_Store
-.directory
-*.debug
-Makefile*
-*.prl
-*.app
 moc_*.cpp
-ui_*.h
 qrc_*.cpp
-Thumbs.db
-*.res
-*.rc
-/.qmake.cache
-/.qmake.stash
-
-# qtcreator generated files
-*.pro.user*
-*.qbs.user*
-CMakeLists.txt.user*
-
-# xemacs temporary files
-*.flc
-
-# Vim temporary files
-.*.swp
-
-# Visual Studio generated files
-*.ib_pdb_index
-*.idb
-*.ilk
-*.pdb
-*.sln
-*.suo
-*.vcproj
-*vcproj.*.*.user
-*.ncb
-*.sdf
-*.opensdf
-*.vcxproj
-*vcxproj.*
-
-# MinGW generated files
-*.Debug
-*.Release
-
-# Python byte code
-*.pyc
-
-# Binaries
-# --------
+ui_*.h
+.qtc_clangd/
+Makefile*
+*.o
+*.so
 *.dll
 *.exe
+*.a
+*.lib
+*.pdb
+*.ilk
 
-# Directories with generated files
-.moc/
-.obj/
-.pch/
-.rcc/
-.uic/
-/build*/
+# Qt Creator 配置
+.idea/
+*.iml
+*.ipr
+*.iws
+.c9/
+.project
+.cproject
+.settings/
+*.sublime-*
+.vscode/
+*.code-workspace
+.DS_Store
+
+# 操作系统相关
+####################################
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.tmp
+*.bak
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+*.swp
+*.swo
+
+# Linux
+*~
+.*.swp
+*.swap
+.autotools
+.cmake/
+
+# 其他通用忽略
+####################################
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+*.bak
+*.old
+
+# 证书/密钥
+*.pem
+*.key
+*.cert
+*.pfx
+
+# 数据库文件
+*.db
+*.sqlite
+*.sql
+
+# 压缩包
+*.zip
+*.tar.gz
+*.tar.bz2
+*.rar
