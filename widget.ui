@@ -51,7 +51,7 @@
       </widget>
      </item>
      <item row="6" column="2">
-      <widget class="QPushButton" name="btnpoint">
+      <widget class="QPushButton" name="btnPeriod">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -116,7 +116,7 @@
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QPushButton" name="btnpingfang">
+      <widget class="QPushButton" name="btnSquare">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -129,7 +129,7 @@
       </widget>
      </item>
      <item row="2" column="0">
-      <widget class="QPushButton" name="btndaoshu">
+      <widget class="QPushButton" name="btnInverse">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -142,7 +142,7 @@
       </widget>
      </item>
      <item row="6" column="0">
-      <widget class="QPushButton" name="btnzhengfuhao">
+      <widget class="QPushButton" name="btnOpposite">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -155,7 +155,7 @@
       </widget>
      </item>
      <item row="3" column="3">
-      <widget class="QPushButton" name="btncheng">
+      <widget class="QPushButton" name="btnMultiple">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -168,7 +168,7 @@
       </widget>
      </item>
      <item row="2" column="3">
-      <widget class="QPushButton" name="btnchu">
+      <widget class="QPushButton" name="btnDivide">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -181,7 +181,7 @@
       </widget>
      </item>
      <item row="4" column="3">
-      <widget class="QPushButton" name="btnjia">
+      <widget class="QPushButton" name="btnPlus">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -246,7 +246,7 @@
       </widget>
      </item>
      <item row="5" column="3">
-      <widget class="QPushButton" name="btnjian">
+      <widget class="QPushButton" name="btnMinus">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -259,7 +259,7 @@
       </widget>
      </item>
      <item row="0" column="0" colspan="4">
-      <widget class="QLineEdit" name="dispaly">
+      <widget class="QLineEdit" name="display">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -282,7 +282,7 @@
       </widget>
      </item>
      <item row="1" column="0">
-      <widget class="QPushButton" name="btnyushu">
+      <widget class="QPushButton" name="btnPercentage">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -308,7 +308,7 @@
       </widget>
      </item>
      <item row="6" column="3">
-      <widget class="QPushButton" name="btndengyu">
+      <widget class="QPushButton" name="btnEqual">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -334,7 +334,7 @@
       </widget>
      </item>
      <item row="2" column="2">
-      <widget class="QPushButton" name="btnkaifang">
+      <widget class="QPushButton" name="btnSqrt">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -347,7 +347,7 @@
       </widget>
      </item>
      <item row="1" column="3">
-      <widget class="QPushButton" name="btndaotui">
+      <widget class="QPushButton" name="btnDel">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
