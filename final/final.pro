@@ -1,38 +1,37 @@
 QT       += core gui widgets sql network
-
 CONFIG += c++17
-
 DEFINES += QT_DEPRECATED_WARNINGS
 
+# 客户端程序
+TARGET = IM_Client
+TEMPLATE = app
+
+# 源文件列表
 SOURCES += \
+    logindialog.cpp \
     main.cpp \
     mainwindow.cpp \
     dbmanager.cpp \
     tcpclient.cpp \
     tcpmessage.cpp \
-    messagemodel.cpp \
     contactmodel.cpp \
-    logindialog.cpp  # 新增
+    messagemodel.cpp \
+    tcpthreadmanager.cpp \
 
+
+# 头文件列表
 HEADERS += \
+    logindialog.h \
     mainwindow.h \
     dbmanager.h \
     tcpclient.h \
     tcpmessage.h \
-    messagemodel.h \
     contactmodel.h \
-    logindialog.h    # 新增
+    messagemodel.h \
+    tcpthreadmanager.h
 
-# 添加资源文件（样式表）
-RESOURCES += \
-    resources.qrc
+# 服务器编译配置（独立生成）
 
-# Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
 
-test_server.target = test_server
-test_server.sources = test_server.cpp
-test_server.config = release
-QMAKE_EXTRA_TARGETS += test_server
+
+

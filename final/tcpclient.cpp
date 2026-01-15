@@ -1,158 +1,175 @@
 #include "tcpclient.h"
-#include <QThread>
+#include <QJsonDocument>
 #include <QDebug>
+#include <QThread>
+#include <QCoreApplication>
 
-// ========== TcpClient实现 ==========
-TcpClient::TcpClient(QObject *parent) : QObject(parent) {
-    // 初始化socket和定时器
+TcpClient::TcpClient(QObject *parent) : QObject(parent),
+    m_heartbeatInterval(30000),
+    m_isInitialized(false)
+{
+    qDebug() << "TcpClient 构造函数 - 当前线程:" << QThread::currentThread();
+
+    // 必须确保对象在同一个线程中创建所有子对象
     m_socket = new QTcpSocket(this);
     m_heartbeatTimer = new QTimer(this);
-    m_reconnectTimer = new QTimer(this);
 
-    // 设置重连间隔（5秒）
-    m_reconnectTimer->setInterval(5000);
+    // 连接信号槽 - 使用DirectConnection确保在正确线程
+    connect(m_socket, &QTcpSocket::readyRead, this, &TcpClient::onReadyRead, Qt::DirectConnection);
+    connect(m_socket, &QTcpSocket::stateChanged, this, &TcpClient::onSocketStateChanged, Qt::DirectConnection);
+    connect(m_heartbeatTimer, &QTimer::timeout, this, &TcpClient::onHeartbeatTimeout, Qt::DirectConnection);
 
-    // 绑定socket信号槽
-    connect(m_socket, &QTcpSocket::connected, this, &TcpClient::onConnected);
-    connect(m_socket, &QTcpSocket::disconnected, this, &TcpClient::onDisconnected);
-    connect(m_socket, &QTcpSocket::readyRead, this, &TcpClient::onReadyRead);
-    connect(m_socket, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::errorOccurred),
-            this, &TcpClient::onSocketError);
-
-    // 绑定定时器信号槽
-    connect(m_heartbeatTimer, &QTimer::timeout, this, &TcpClient::sendHeartbeat);
-    connect(m_reconnectTimer, &QTimer::timeout, this, &TcpClient::reconnect);
+    m_isInitialized = true;
+    qDebug() << "TcpClient 初始化完成";
 }
 
 TcpClient::~TcpClient() {
+    qDebug() << "TcpClient 析构函数 - 当前线程:" << QThread::currentThread();
     disconnectFromServer();
 }
 
-void TcpClient::connectToServer(const QString& ip, quint16 port) {
-    QMutexLocker locker(&m_mutex);
-    m_serverIp = ip;
-    m_serverPort = port;
+bool TcpClient::connectToServer(const QString& ip, quint16 port) {
+    qDebug() << "TcpClient::connectToServer - 当前线程:" << QThread::currentThread()
+        << "，目标:" << ip << ":" << port
+        << "，对象线程:" << this->thread()
+        << "，Socket线程:" << m_socket->thread();
 
-    if (m_socket->state() != QTcpSocket::UnconnectedState) {
-        m_socket->disconnectFromHost();
+    // 确保在正确线程中操作
+    if (QThread::currentThread() != this->thread()) {
+        qDebug() << "警告：connectToServer 在错误线程调用！";
     }
 
-    qDebug() << "[网络] 尝试连接服务器：" << ip << ":" << port;
+    if (m_socket->state() == QAbstractSocket::ConnectedState) {
+        qDebug() << "已连接到服务器，无需重复连接";
+        return true;
+    }
+
+    // 如果正在连接，先断开
+    if (m_socket->state() != QAbstractSocket::UnconnectedState) {
+        m_socket->abort();
+    }
+
+    qDebug() << "开始连接服务器...";
     m_socket->connectToHost(ip, port);
+
+    bool connected = m_socket->waitForConnected(5000);
+
+    if (connected) {
+        qDebug() << "连接成功！";
+
+        // 确保定时器在当前线程启动
+        if (!m_heartbeatTimer->isActive()) {
+            m_heartbeatTimer->start(m_heartbeatInterval);
+            qDebug() << "心跳定时器已启动，间隔:" << m_heartbeatInterval << "ms";
+        }
+    } else {
+        qDebug() << "连接失败:" << m_socket->errorString();
+    }
+
+    return connected;
 }
 
 void TcpClient::disconnectFromServer() {
-    QMutexLocker locker(&m_mutex);
-    m_heartbeatTimer->stop();
-    m_reconnectTimer->stop();
+    qDebug() << "TcpClient::disconnectFromServer - 当前线程:" << QThread::currentThread();
 
-    if (m_socket->state() != QTcpSocket::UnconnectedState) {
-        m_socket->disconnectFromHost();
+    // 停止心跳定时器
+    if (m_heartbeatTimer && m_heartbeatTimer->isActive()) {
+        m_heartbeatTimer->stop();
+        qDebug() << "心跳定时器已停止";
     }
 
-    m_isConnected = false;
-    emit connectStateChanged(false);
-    qDebug() << "[网络] 主动断开服务器连接";
-}
-
-void TcpClient::sendMessage(const TcpMessage& msg) {
-    QMutexLocker locker(&m_mutex);
-    if (!m_isConnected) {
-        emit errorOccurred("[网络错误] 未连接到服务器，无法发送消息");
-        return;
-    }
-
-    // 将消息转为JSON字符串，再转为字节数组发送
-    QString jsonStr = msg.toJsonString();
-    QByteArray data = jsonStr.toUtf8();
-
-    // 发送数据（实际项目可添加消息长度前缀，防止粘包）
-    qint64 sendLen = m_socket->write(data);
-    if (sendLen == -1) {
-        emit errorOccurred("[网络错误] 消息发送失败：" + m_socket->errorString());
-    } else {
-        qDebug() << "[网络] 发送消息成功：" << jsonStr;
+    // 断开socket连接
+    if (m_socket) {
+        if (m_socket->state() != QAbstractSocket::UnconnectedState) {
+            m_socket->disconnectFromHost();
+            if (m_socket->state() != QAbstractSocket::UnconnectedState) {
+                m_socket->waitForDisconnected(1000);
+            }
+        }
     }
 }
 
-void TcpClient::setHeartbeatInterval(int intervalMs) {
-    m_heartbeatInterval = intervalMs;
-    m_heartbeatTimer->setInterval(intervalMs);
+qint64 TcpClient::sendMessage(const TcpMessage& msg) {
+    qDebug() << "TcpClient::sendMessage - 当前线程:" << QThread::currentThread();
+
+    if (!m_socket || m_socket->state() != QAbstractSocket::ConnectedState) {
+        qDebug() << "发送失败：未连接到服务器";
+        emit errorOccurred("未连接到服务器");
+        return -1;
+    }
+
+    QJsonObject obj = msg.toJson();
+    QJsonDocument doc(obj);
+    QByteArray data = doc.toJson(QJsonDocument::Compact);
+    qint64 bytesWritten = m_socket->write(data + "\n");
+
+    if (bytesWritten > 0) {
+        m_socket->flush();
+        qDebug() << "消息发送成功，大小:" << bytesWritten;
+    }
+
+    return bytesWritten;
 }
 
-void TcpClient::onConnected() {
-    QMutexLocker locker(&m_mutex);
-    m_isConnected = true;
-    m_reconnectTimer->stop(); // 停止重连
-    m_heartbeatTimer->start(m_heartbeatInterval); // 启动心跳
+void TcpClient::setHeartbeatInterval(int interval) {
+    qDebug() << "TcpClient::setHeartbeatInterval - 当前线程:" << QThread::currentThread()
+        << "，新间隔:" << interval;
 
-    emit connectStateChanged(true);
-    qDebug() << "[网络] 连接服务器成功";
+    m_heartbeatInterval = interval;
+    if (m_heartbeatTimer->isActive()) {
+        m_heartbeatTimer->setInterval(interval);
+    }
 }
 
-void TcpClient::onDisconnected() {
-    QMutexLocker locker(&m_mutex);
-    m_isConnected = false;
-    m_heartbeatTimer->stop(); // 停止心跳
-    m_reconnectTimer->start(); // 启动重连
-
-    emit connectStateChanged(false);
-    qDebug() << "[网络] 与服务器断开连接，将自动重连";
+void TcpClient::debugThreadInfo() {
+    qDebug() << "=== TcpClient 线程信息 ===";
+    qDebug() << "当前线程:" << QThread::currentThread();
+    qDebug() << "对象线程:" << this->thread();
+    if (m_socket) {
+        qDebug() << "Socket线程:" << m_socket->thread();
+        qDebug() << "Socket状态:" << m_socket->state();
+    }
+    if (m_heartbeatTimer) {
+        qDebug() << "定时器线程:" << m_heartbeatTimer->thread();
+        qDebug() << "定时器状态:" << (m_heartbeatTimer->isActive() ? "激活" : "未激活");
+    }
+    qDebug() << "=========================";
 }
 
 void TcpClient::onReadyRead() {
-    // 读取所有收到的数据
-    QByteArray data = m_socket->readAll();
-    QString jsonStr = QString::fromUtf8(data);
-    qDebug() << "[网络] 收到消息：" << jsonStr;
+    while (m_socket->canReadLine()) {
+        QByteArray line = m_socket->readLine().trimmed();
+        if (line.isEmpty()) continue;
 
-    // 解析为TcpMessage对象并发送信号
-    TcpMessage msg = TcpMessage::fromJsonString(jsonStr);
-    emit messageReceived(msg);
-}
+        QJsonDocument doc = QJsonDocument::fromJson(line);
+        if (!doc.isObject()) continue;
 
-void TcpClient::onSocketError(QAbstractSocket::SocketError error) {
-    if (error == QAbstractSocket::RemoteHostClosedError) {
-        return; // 远程主机关闭连接，已在onDisconnected处理
-    }
-
-    QString errorMsg = "[网络错误] " + m_socket->errorString();
-    qDebug() << errorMsg;
-    emit errorOccurred(errorMsg);
-}
-
-void TcpClient::sendHeartbeat() {
-    // 构造心跳消息
-    TcpMessage heartbeatMsg(MessageType::Heartbeat, "", "", "PING");
-    sendMessage(heartbeatMsg);
-    qDebug() << "[网络] 发送心跳包";
-}
-
-void TcpClient::reconnect() {
-    QMutexLocker locker(&m_mutex);
-    if (!m_isConnected && !m_serverIp.isEmpty() && m_serverPort > 0) {
-        qDebug() << "[网络] 尝试重连服务器...";
-        m_socket->connectToHost(m_serverIp, m_serverPort);
+        TcpMessage msg = TcpMessage::fromJson(doc.object());
+        emit messageReceived(msg);
     }
 }
 
-// ========== TcpThreadManager实现 ==========
-TcpThreadManager::TcpThreadManager() {
-    // 创建子线程
-    m_thread = new QThread();
-    // 创建TcpClient实例
-    m_tcpClient = new TcpClient();
-    // 将TcpClient移到子线程（避免阻塞UI）
-    m_tcpClient->moveToThread(m_thread);
-    // 启动线程
-    m_thread->start();
+void TcpClient::onSocketStateChanged(QAbstractSocket::SocketState state) {
+    bool connected = (state == QAbstractSocket::ConnectedState);
+
+    // 只发送最终连接状态，避免中间状态干扰
+    static QAbstractSocket::SocketState lastState = QAbstractSocket::UnconnectedState;
+
+    if (state != lastState) {
+        qDebug() << "Socket状态变化:" << lastState << "->" << state;
+        lastState = state;
+
+        // 只有在真正连接或断开时才发送信号
+        if (state == QAbstractSocket::ConnectedState ||
+            state == QAbstractSocket::UnconnectedState) {
+            emit connectStateChanged(connected);
+        }
+    }
 }
 
-TcpThreadManager::~TcpThreadManager() {
-    // 停止线程
-    m_thread->quit();
-    m_thread->wait();
-    // 释放资源
-    delete m_tcpClient;
-    delete m_thread;
+void TcpClient::onHeartbeatTimeout() {
+    if (m_socket->state() == QAbstractSocket::ConnectedState) {
+        TcpMessage msg(MessageType::Heartbeat, "", "", "PING");
+        sendMessage(msg);
+    }
 }

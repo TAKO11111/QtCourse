@@ -1,46 +1,88 @@
 #include "mainwindow.h"
 #include <QMessageBox>
 #include <QFile>
-#include <QStandardItemModel>
+#include <QDebug>
+#include <QTimer>
 #include "dbmanager.h"
+#include "tcpthreadmanager.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
     m_contactModel(new ContactModel(this)),
     m_messageModel(new MessageModel(this)),
-    m_tcpClient(TcpThreadManager::getInstance().getTcpClient())
+    m_tcpClient(nullptr),
+    m_connectionInProgress(false)
 {
+    qDebug() << "MainWindow构造完成";
     initUI();
-    initNetwork();
     initModel();
 }
 
-MainWindow::~MainWindow() {}
+MainWindow::~MainWindow() {
+    qDebug() << "MainWindow析构";
+}
 
 void MainWindow::init(const QString& username) {
     m_currentUser = username;
     this->setWindowTitle(QString("IM系统 - %1").arg(username));
 
-    // 加载联系人
-    m_contactModel->loadContacts(username);
-    // 连接到服务器（测试用，替换为你的服务器IP和端口）
-    m_tcpClient->connectToServer("127.0.0.1", 8888);
+    qDebug() << "MainWindow初始化，当前用户:" << username;
 
-    // 加载样式表
+    // 先加载联系人
+    m_contactModel->loadContacts(username);
+    loadContactsToTreeWidget();
+
+    // 获取TcpThreadManager实例
+    TcpThreadManager& manager = TcpThreadManager::getInstance();
+
+    // 连接信号
+    connect(&manager, &TcpThreadManager::messageReceived,
+            this, &MainWindow::onMessageReceived, Qt::QueuedConnection);
+    connect(&manager, &TcpThreadManager::connectStateChanged,
+            this, &MainWindow::onConnectStateChanged, Qt::QueuedConnection);
+    connect(&manager, &TcpThreadManager::errorOccurred, this, [=](const QString& msg) {
+        QMessageBox::warning(this, "网络错误", msg);
+    }, Qt::QueuedConnection);
+
+    // 设置心跳间隔
+    manager.setHeartbeatInterval(30000);
+
+    // 延迟连接服务器，确保GUI完全初始化
+    QTimer::singleShot(500, this, &MainWindow::delayedConnect);
+
+    // 加载样式
     QFile styleFile("./resources/style.qss");
     if (styleFile.open(QFile::ReadOnly)) {
-        QString style = QLatin1String(styleFile.readAll());
-        this->setStyleSheet(style);
+        this->setStyleSheet(QLatin1String(styleFile.readAll()));
         styleFile.close();
+        qDebug() << "样式文件加载成功";
+    } else {
+        qDebug() << "样式文件不存在，使用默认样式";
     }
 }
 
+void MainWindow::delayedConnect() {
+    if (m_connectionInProgress) return;
+
+    m_connectionInProgress = true;
+    qDebug() << "开始连接服务器...";
+
+    TcpThreadManager& manager = TcpThreadManager::getInstance();
+    bool connected = manager.connectToServer("127.0.0.1", 8888);
+
+    if (!connected) {
+        QMessageBox::warning(this, "提示",
+                             "连接服务器失败！\n请确保服务器程序已启动并监听8888端口。");
+    }
+
+    m_connectionInProgress = false;
+}
 void MainWindow::initUI() {
-    // 设置窗口属性
+    qDebug() << "初始化UI...";
+
     this->setObjectName("MainWindow");
     this->setMinimumSize(800, 600);
 
-    // 创建控件
     m_contactTree = new QTreeWidget(this);
     m_contactTree->setObjectName("ContactTree");
     m_contactTree->setHeaderLabel("联系人");
@@ -56,7 +98,6 @@ void MainWindow::initUI() {
     m_sendBtn = new QPushButton("发送", this);
     m_sendBtn->setObjectName("SendBtn");
 
-    // 布局
     m_mainSplitter = new QSplitter(Qt::Horizontal, this);
     m_chatLayout = new QVBoxLayout();
     m_inputLayout = new QHBoxLayout();
@@ -75,63 +116,104 @@ void MainWindow::initUI() {
 
     m_mainSplitter->addWidget(m_contactTree);
     m_mainSplitter->addWidget(chatWidget);
-    m_mainSplitter->setSizes({200, 600}); // 左侧200px，右侧600px
+    m_mainSplitter->setSizes({200, 600});
 
     this->setCentralWidget(m_mainSplitter);
 
-    // 绑定信号槽
     connect(m_sendBtn, &QPushButton::clicked, this, &MainWindow::onSendMessageClicked);
-    connect(m_contactTree, &QTreeWidget::clicked, this, &MainWindow::onContactClicked);
-    connect(m_tcpClient, &TcpClient::messageReceived, this, &MainWindow::onMessageReceived);
-    connect(m_tcpClient, &TcpClient::connectStateChanged, this, &MainWindow::onConnectStateChanged);
+    connect(m_contactTree, &QTreeWidget::itemClicked, this, &MainWindow::onContactItemClicked);
+
+    qDebug() << "UI初始化完成";
 }
 
 void MainWindow::initNetwork() {
-    // 设置心跳间隔（30秒）
-    m_tcpClient->setHeartbeatInterval(30000);
+    qDebug() << "初始化网络设置...";
+    TcpThreadManager& manager = TcpThreadManager::getInstance();
+    manager.setHeartbeatInterval(30000);
+    qDebug() << "心跳间隔设置为30秒";
 }
 
 void MainWindow::initModel() {
-    // 绑定联系人模型到树控件（简化版，实际可自定义Delegate）
-    // 此处先手动加载联系人到TreeWidget（后续可替换为QTreeView+ContactModel）
+    qDebug() << "初始化模型...";
     m_contactTree->clear();
+    qDebug() << "模型初始化完成";
+}
+
+void MainWindow::loadContactsToTreeWidget() {
+    qDebug() << "加载联系人到树控件...";
+    m_contactTree->clear();
+    const QList<ContactGroup>& groups = m_contactModel->getGroups();
+
+    qDebug() << "联系人分组数量:" << groups.size();
+    for (const auto& group : groups) {
+        QTreeWidgetItem* groupItem = new QTreeWidgetItem(m_contactTree);
+        groupItem->setText(0, group.groupName);
+        qDebug() << "分组:" << group.groupName << "，联系人数量:" << group.contactList.size();
+
+        for (const auto& contact : group.contactList) {
+            QTreeWidgetItem* contactItem = new QTreeWidgetItem(groupItem);
+            contactItem->setText(0, contact);
+        }
+    }
+    qDebug() << "联系人加载完成";
 }
 
 void MainWindow::onSendMessageClicked() {
     QString content = m_messageInput->text().trimmed();
-    if (content.isEmpty() || m_currentChatTarget.isEmpty()) {
-        QMessageBox::warning(this, "警告", "请选择聊天对象并输入消息！");
+    if (content.isEmpty()) {
+        QMessageBox::warning(this, "警告", "请输入消息内容！");
         return;
     }
 
-    // 构造单聊消息
+    if (m_currentChatTarget.isEmpty()) {
+        QMessageBox::warning(this, "警告", "请先选择聊天对象！");
+        return;
+    }
+
+    TcpThreadManager& manager = TcpThreadManager::getInstance();
     TcpMessage msg(MessageType::SingleChat, m_currentUser, m_currentChatTarget, content);
-    // 发送网络消息
-    m_tcpClient->sendMessage(msg);
-    // 添加到本地消息模型
+    qint64 result = manager.sendMessage(msg);
+
+    if (result < 0) {
+        QMessageBox::warning(this, "提示", "消息发送失败！");
+        return;
+    }
+
     MessageItem item;
     item.content = content;
-    item.time = msg.time();
+    item.time = QDateTime::currentDateTime();
     item.type = MessageRoleType::Send;
     item.fromUser = m_currentUser;
     item.toUser = m_currentChatTarget;
     m_messageModel->addMessage(item);
-    // 保存到数据库
+
     DBManager::getInstance().saveChatRecord(m_currentUser, m_currentChatTarget, content);
 
-    // 清空输入框
     m_messageInput->clear();
+    qDebug() << "消息发送成功，内容:" << content << "，目标:" << m_currentChatTarget;
 }
 
 void MainWindow::onMessageReceived(const TcpMessage& msg) {
-    // 只处理单聊消息
+    qDebug() << "MainWindow::onMessageReceived - 接收到消息，类型:" << static_cast<int>(msg.type())
+              << "，来自:" << msg.from() << "，内容:" << msg.content();
+
     if (msg.type() != MessageType::SingleChat) {
+        qDebug() << "非单聊消息，跳过处理";
         return;
     }
 
-    // 检查是否是发给当前用户的消息
     if (msg.to() == m_currentUser) {
-        // 添加到本地消息模型
+        qDebug() << "消息是发给当前用户的";
+
+        // 如果当前没有聊天目标，或者消息来自当前聊天目标
+        if (m_currentChatTarget.isEmpty() || m_currentChatTarget == msg.from()) {
+            m_currentChatTarget = msg.from();
+            qDebug() << "设置当前聊天目标为:" << m_currentChatTarget;
+
+            // 加载历史消息
+            m_messageModel->loadHistoryMessages(m_currentUser, m_currentChatTarget);
+        }
+
         MessageItem item;
         item.content = msg.content();
         item.time = msg.time();
@@ -139,30 +221,50 @@ void MainWindow::onMessageReceived(const TcpMessage& msg) {
         item.fromUser = msg.from();
         item.toUser = msg.to();
         m_messageModel->addMessage(item);
-        // 保存到数据库
+
         DBManager::getInstance().saveChatRecord(msg.from(), msg.to(), msg.content());
+
+        qDebug() << "消息已添加到界面并保存到数据库";
+    } else {
+        qDebug() << "消息不是发给当前用户的，跳过";
     }
 }
 
 void MainWindow::onConnectStateChanged(bool connected) {
+    qDebug() << "MainWindow::onConnectStateChanged - 连接状态:" << (connected ? "已连接" : "已断开");
+
     if (connected) {
         QMessageBox::information(this, "提示", "已连接到服务器！");
     } else {
-        QMessageBox::warning(this, "提示", "与服务器断开连接，正在重连...");
+        QMessageBox::warning(this, "提示", "与服务器断开连接！");
     }
 }
 
-void MainWindow::onContactClicked(const QModelIndex& index) {
-    // 获取选中的联系人（简化版，实际需解析ContactModel）
-    QTreeWidgetItem* item = m_contactTree->currentItem();
-    if (item && !item->parent()) {
-        // 点击的是分组，不处理
+void MainWindow::onContactItemClicked(QTreeWidgetItem* item, int column) {
+    Q_UNUSED(column);
+
+    if (!item) {
+        qDebug() << "点击了空项目";
+        m_currentChatTarget = "";
         return;
     }
 
-    if (item) {
-        m_currentChatTarget = item->text(0);
-        // 加载该联系人的历史消息
-        m_messageModel->loadHistoryMessages(m_currentUser, m_currentChatTarget);
+    // 如果点击的是分组项（没有父项）
+    if (!item->parent()) {
+        qDebug() << "点击了分组:" << item->text(0);
+        m_currentChatTarget = "";
+        m_messageModel->clearMessages();
+        return;
     }
+
+    // 点击的是联系人项
+    QString contactName = item->text(0);
+    QString groupName = item->parent()->text(0);
+
+    qDebug() << "点击了联系人:" << contactName << "，分组:" << groupName;
+
+    m_currentChatTarget = contactName;
+    m_messageModel->loadHistoryMessages(m_currentUser, m_currentChatTarget);
+
+    qDebug() << "当前聊天目标设置为:" << m_currentChatTarget;
 }
