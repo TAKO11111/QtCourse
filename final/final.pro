@@ -32,5 +32,7 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-DISTFILES += \
-    resources/style.qss
+test_server.target = test_server
+test_server.sources = test_server.cpp
+test_server.config = release
+QMAKE_EXTRA_TARGETS += test_server
