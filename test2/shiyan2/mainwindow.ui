@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>1</number>
+    </property>
+    <property name="topMargin">
+     <number>1</number>
+    </property>
+    <property name="rightMargin">
+     <number>1</number>
+    </property>
+    <property name="bottomMargin">
+     <number>1</number>
+    </property>
+    <item>
+     <widget class="CodeEditor" name="TextEdit"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>文件(&amp;f)</string>
+    </property>
+    <addaction name="actionNew"/>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionSaveAs"/>
+    <addaction name="actionEdit"/>
+   </widget>
+   <widget class="QMenu" name="menu_e">
+    <property name="title">
+     <string>编辑(&amp;e)</string>
+    </property>
+    <addaction name="actionredo"/>
+    <addaction name="actionUndo"/>
+    <addaction name="actionCut"/>
+    <addaction name="actioncopy"/>
+    <addaction name="actionpaste"/>
+    <addaction name="separator"/>
+    <addaction name="checkaction"/>
+    <addaction name="repacesaction"/>
+    <addaction name="separator"/>
+    <addaction name="actionselectall"/>
+   </widget>
+   <widget class="QMenu" name="menu_o">
+    <property name="title">
+     <string>格式(&amp;o)</string>
+    </property>
+    <addaction name="action_color"/>
+    <addaction name="actionbeicolor"/>
+    <addaction name="actionzibeicolor"/>
+    <addaction name="actionwrap"/>
+    <addaction name="separator"/>
+    <addaction name="separator"/>
+    <addaction name="actionFont"/>
+   </widget>
+   <widget class="QMenu" name="menu_v">
+    <property name="title">
+     <string>查看(&amp;v)</string>
+    </property>
+    <addaction name="actionstatus"/>
+    <addaction name="actiontools"/>
+   </widget>
+   <widget class="QMenu" name="menu_h">
+    <property name="title">
+     <string>帮助(&amp;h)</string>
+    </property>
+   </widget>
+   <addaction name="menu"/>
+   <addaction name="menu_e"/>
+   <addaction name="menu_o"/>
+   <addaction name="menu_v"/>
+   <addaction name="menu_h"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionNew"/>
+   <addaction name="actionOpen"/>
+   <addaction name="actionSave"/>
+   <addaction name="actionSaveAs"/>
+   <addaction name="actionEdit"/>
+   <addaction name="separator"/>
+   <addaction name="actionUndo"/>
+   <addaction name="actionredo"/>
+   <addaction name="actionCut"/>
+   <addaction name="actioncopy"/>
+   <addaction name="actionpaste"/>
+   <addaction name="separator"/>
+   <addaction name="repacesaction"/>
+   <addaction name="checkaction"/>
+   <addaction name="separator"/>
+   <addaction name="actionwrap"/>
+   <addaction name="actionnum"/>
+   <addaction name="separator"/>
+   <addaction name="actionstatus"/>
+   <addaction name="actiontools"/>
+   <addaction name="actionabout"/>
+  </widget>
+  <action name="actionNew">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/images/1.png</normaloff>:/images/1.png</iconset>
+   </property>
+   <property name="text">
+    <string>新建（&amp;N）</string>
+   </property>
+   <property name="toolTip">
+    <string>新建文件夹</string>
+   </property>
+   <property name="shortcut">
+    <string>Backspace</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/images/4.png</normaloff>:/images/4.png</iconset>
+   </property>
+   <property name="text">
+    <string>打开（&amp;O）</string>
+   </property>
+   <property name="toolTip">
+    <string>打开文件</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/images/2.png</normaloff>:/images/2.png</iconset>
+   </property>
+   <property name="text">
+    <string>保存（&amp;N）</string>
+   </property>
+   <property name="toolTip">
+    <string>保存文件</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionSaveAs">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/images/6.png</normaloff>:/images/6.png</iconset>
+   </property>
+   <property name="text">
+    <string>另存为（&amp;A）</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionEdit">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/images/7.png</normaloff>:/images/7.png</iconset>
+   </property>
+   <property name="text">
+    <string>退出（&amp;X）</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionCut">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/images/5.png</normaloff>:/images/5.png</iconset>
+   </property>
+   <property name="text">
+    <string>剪切（&amp;T）</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionabout">
+   <property name="text">
+    <string>关于</string>
+   </property>
+   <property name="toolTip">
+    <string>显示关于信息</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="checkaction">
+   <property name="text">
+    <string>查找</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="repacesaction">
+   <property name="text">
+    <string>替换</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actioncopy">
+   <property name="text">
+    <string>复制</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionpaste">
+   <property name="text">
+    <string>粘贴</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="text">
+    <string>恢复</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionredo">
+   <property name="text">
+    <string>撤销</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="action_color">
+   <property name="text">
+    <string>字体颜色（&amp;l）</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionbeicolor">
+   <property name="text">
+    <string>背景颜色</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionzibeicolor">
+   <property name="text">
+    <string>字体背景色</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionwrap">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>自动换行（&amp;n）</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionFont">
+   <property name="text">
+    <string>字体</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionstatus">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>状态栏</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actiontools">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>工具栏</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionselectall">
+   <property name="text">
+    <string>全选</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionnum">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>显示与隐藏</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CodeEditor</class>
+   <extends>QPlainTextEdit</extends>
+   <header location="global">codeeditor.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="res.qrc"/>
+ </resources>
+ <connections/>
+</ui>

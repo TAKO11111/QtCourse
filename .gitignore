@@ -1,0 +1,23 @@
+# 压缩包
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# Qt编译产物
+build/
+bin/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+moc_*
+ui_*
+qrc_*
+
+# 临时文件
+*.tmp
+*.log
+.DS_Store
